@@ -12,3 +12,19 @@ What `build` does: parses the notes markup, auto-splits long pages into `(contin
 Needs: Python 3 with pymupdf, pillow, lxml, pyyaml; pandoc; LibreOffice (`soffice`) for .pptx decks and `--render`.
 
 The markup format is documented in the skill's SKILL.md.
+
+## Example (fictional)
+
+`example/` holds a made-up lecture (DEMO 200, Lecture 5: first-order RC circuits) that shows every format feature. Nothing in it comes from a real course.
+
+- `example-deck.pdf`: the 6 invented slides (slide 4 carries a purple notetaker note, which the scan removes)
+- `example-notes.md`: the markup that produced the notes
+- `DEMO200-lecture-5-notes.docx`: the finished Word notes
+- `reference-sheet1.png`, `reference-sheet2.png`: rendered pages, 12 per image, used as the layout reference
+
+Rebuild it:
+
+```
+python3 build_notes.py scan example/example-deck.pdf -o slides/
+python3 build_notes.py build example/example-notes.md --slides slides/ -o out.docx --render render/
+```
