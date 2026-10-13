@@ -9,6 +9,8 @@ build_notes.py: AES lecture notes builder (slide left 2/3, notes right 1/3).
 
   python3 build_notes.py build NOTES.md --slides slides/ -o OUT.docx [--render DIR]
       Builds the Word notes from the markup in NOTES.md (see FORMAT.md).
+      "!fig path.png" places an image at column width (cheat-sheet design
+      figures from tools/cheat_figures.py, or a figure beside a slide).
       Auto-splits long pages into "(continued)" pages, converts LaTeX to native
       Word equations, generates title page, contents, Open questions, runs the
       content checks, and (with --render) renders pages to PNG contact sheets.
@@ -396,6 +398,9 @@ class Block:
             return para_h(self.runs, width - 20, sz, 3, 4)
         if k == "code":
             return len(self.lines) * 1.18 * CODE_SZ / 2.0 + 6
+        if k == "fig":
+            wpx, hpx = fig_size(self.path)
+            return width * hpx / wpx + 6
         if k == "table":
             cw = col_widths(self.rows, width * 20)
             h = 0
@@ -473,7 +478,26 @@ def block_xml(doc, b, width_tw, cheat=False, num_ids=None):
                        for j, l in enumerate(b.lines)) + p("", (0, 60))
     if k == "table":
         return table_xml(doc, b.rows, width_tw, CHEAT_SZ if cheat else DEF_SZ)
+    if k == "fig":
+        w_in = (width_tw - 60) / 1440.0
+        return p(image_xml(doc, fig_path(b.path), max_w_in=w_in, max_h_in=4.0), (20, 40), jc="center")
     return ""
+
+
+NOTES_DIR = "."
+
+
+def fig_path(path):
+    """!fig paths: absolute, relative to the working directory, or relative to notes.md."""
+    for cand in (path, os.path.join(NOTES_DIR, path)):
+        if os.path.exists(cand):
+            return cand
+    die("!fig image not found: %s" % path)
+
+
+def fig_size(path):
+    from PIL import Image
+    return Image.open(fig_path(path)).size
 
 
 def table_xml(doc, rows, width_tw, sz):
@@ -581,6 +605,8 @@ def parse_blocks(lines, ctx):
             out.append(Block("red", runs=parse_inline(s[5:]), raw=s[5:]))
         elif s.startswith("!slide "):
             out.append(Block("onslide", runs=parse_inline(s[7:]), raw=s[7:]))
+        elif s.startswith("!fig "):
+            out.append(Block("fig", path=s[5:].strip(), raw=s[5:].strip()))
         elif s.startswith("defs: "):
             out.append(Block("defs", runs=parse_inline(s[6:]), raw=s[6:]))
         elif re.match(r"^(\s*)[-*] ", ln):
@@ -1159,6 +1185,8 @@ def render(out, rdir, budget):
 
 # =================================================================== BUILD
 def cmd_build(a):
+    global NOTES_DIR
+    NOTES_DIR = os.path.dirname(os.path.abspath(a.notes))
     text = open(a.notes, encoding="utf-8").read()
     meta, body = parse_front(text)
     warn = []

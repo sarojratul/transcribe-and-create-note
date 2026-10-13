@@ -1,0 +1,156 @@
+# Example cheat_update.py spec (the EE 321 Lecture 12 update of 2026-10-12). Figures come from: python3 tools/cheat_figures.py figs/ stab equal dompole margins
+vars:
+  'Feedback amplifier stability: closed-loop poles':
+    0:
+    - - G
+      - closed-loop gain
+    - - A
+      - open-loop gain
+    - - B
+      - feedback factor
+    - - AB
+      - loop gain
+    1:
+    - - '|AB|'
+      - loop-gain magnitude where ∠AB = −π
+  'Multi-pole amplifier: magnitude, phase, bandwidth, unity gain':
+    7:
+    - - n
+      - number of poles
+    - - ω_i
+      - i-th pole frequency (= |p_i|)
+    - - A_{dc}
+      - open-loop DC gain
+    - - ω_0
+      - common pole frequency (equal poles)
+    - - ω_{3dB}
+      - −3 dB bandwidth
+    - - ω_u
+      - unity-gain frequency
+    - - G_{dc}
+      - closed-loop DC gain
+  Equal real poles (all at the same frequency):
+    4:
+    - - ω_c
+      - critical frequency where ∠A = −π
+    - - B_{crit}
+      - feedback factor at which the circuit goes unstable
+    - - G_{dc,min}
+      - smallest stable closed-loop DC gain
+  Dominant-pole compensation:
+    3:
+    - - ω_D
+      - dominant (low) pole frequency
+    - - ω_p
+      - frequency of the double high pole (∠A = −π there)
+    - - B_{max}
+      - largest allowed feedback factor (1 for a follower)
+  Gain and phase margin:
+    1:
+    - - PM
+      - phase margin
+    - - GM_{dB}
+      - gain margin in dB
+    - - '|AB|, ∠AB'
+      - loop-gain magnitude and phase
+figs:
+  Feedback amplifier stability: figs/stab.png
+  Equal real poles: figs/equal.png
+  Dominant-pole compensation: figs/dompole.png
+  Gain and phase margin: figs/margins.png
+extra:
+  Gain and phase margin:
+    1:
+    - - eq
+      - GM = \frac{1}{|AB|}\ \text{at}\ \angle AB = -180^{\circ}
+    - - p
+      - - - 'Plot shortcut (|A| on a log plot): '
+          - true
+        - - draw the 1/B line; crossover |AB| = 1 is where |A| = 1/B; B_max = 1/|A(ω₁₈₀)|;
+            G_min ≈ 1/B_max.
+          - false
+    - - vars
+      - - - GM
+          - 'gain margin as a ratio (> 1: stable)'
+        - - ω_{180}
+          - frequency where ∠A = −180°
+        - - B_{max}
+          - largest stable feedback factor
+        - - G_{min}
+          - smallest stable closed-loop gain
+new:
+- before: Common traps
+  heading: Effects of negative feedback (summary)
+  usewhen: '"what does negative feedback do", "trade-off of adding feedback", "why
+    use negative feedback", effect on gain, bandwidth, impedance or stability'
+  items:
+  - - eq
+    - D = 1 + A_{dc}B,\quad G_{dc} = \frac{A_{dc}}{D} \rightarrow \frac{1}{B}\ (A_{dc}B
+      \gg 1)
+  - - vars
+    - - - D
+        - amount of feedback
+      - - A_{dc}
+        - open-loop DC gain
+      - - B
+        - feedback factor
+      - - G_{dc}
+        - closed-loop DC gain
+  - - p
+    - - - 'Gain: '
+        - true
+      - - ÷D; set by B (resistors), not the op-amp.
+        - false
+  - - p
+    - - - 'Gain stability: '
+        - true
+      - - dG/G = (dA/A)/D (desensitivity). Distortion inside the loop ÷D.
+        - false
+  - - p
+    - - - 'Bandwidth: '
+        - true
+      - - one pole moves left, ω₀′ = Dω₀; gain × bandwidth (GBP) stays constant. Feedback
+          reshapes G(s) even when B is a constant.
+        - false
+  - - p
+    - - - 'Impedance: '
+        - true
+      - - series input R_in ×D, shunt input ÷D; shunt (voltage-sampling) output R_out
+          ÷D, series output ×D.
+        - false
+  - - p
+    - - - 'Two poles: '
+        - true
+      - - poles meet, then a conjugate pair; Q and peaking rise with B; ω₀′ grows
+          only as √D; never unstable.
+        - false
+  - - p
+    - - - 'Three or more poles: '
+        - true
+      - - 'poles cross into the RHP above B_crit. Larger B (lower gain) is LESS stable;
+          the follower (B = 1) is the worst case. Fix: dominant-pole compensation
+          (costs GBW).'
+        - false
+  - - p
+    - - - 'Op-amp analysis: '
+        - true
+      - - negative feedback is what makes V₋ = V₊ (virtual short, virtual ground)
+          valid.
+        - false
+  - - p
+    - - - 'Positive feedback through capacitors '
+        - true
+      - - '(Sallen-Key): the phase shift can turn it into negative feedback; solve
+          the circuit to know.'
+        - false
+  - - p
+    - - - 'Cost: '
+        - true
+      - - lower gain and a stability risk.
+        - false
+  - - p
+    - - - 'Trap: '
+        - true
+      - - D = 1 + A_dc B, not A_dc B; "more feedback" means larger B, smaller gain,
+          less margin.
+        - false
