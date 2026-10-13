@@ -12,6 +12,7 @@ Conventions: one PNG per entry, W = 2.3 in wide, 6 pt fonts, black lines, dpi 40
                               inside the axes so it never collides with the axis title
   bbox_, bsum, barrow, bdot -> block-diagram boxes, summer, arrows, dots (matplotlib only)
   save(fig, path)
+  reg / register_desc      -> figure registry used by tools/figsets/<subject>.py and cheat_figures.py
 Labels are symbols only (omega_0, theta, |p|, K = 3, -20 dB/dec), never example values.
 """
 import matplotlib
@@ -92,3 +93,17 @@ def barrow(ax,pts,arrow=True):
 def bdot(ax,p): ax.plot([p[0]],[p[1]],'k.',ms=3)
 def bfin(ax):
     ax.set_aspect('equal'); ax.axis('off'); ax.autoscale_view()
+
+
+# ---- registry shared by all figure sets (tools/figsets/*.py)
+REG = {}       # name -> function returning a matplotlib figure
+DESC = {}      # name -> one-line description
+DOMAIN = {}    # name -> figure-set module (subject area)
+def reg(fn):
+    if fn.__name__ in REG:
+        raise SystemExit('duplicate figure name %r (in %s and %s)' % (fn.__name__, DOMAIN[fn.__name__], fn.__module__))
+    REG[fn.__name__] = fn
+    DOMAIN[fn.__name__] = fn.__module__.split('.')[-1]
+    return fn
+def register_desc(d):
+    DESC.update(d)
