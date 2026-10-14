@@ -26,12 +26,16 @@ Reusable scripts, so a run calls them instead of rewriting them. Every script pr
 | Script | What it does |
 |---|---|
 | `slide_crop.py` | Cut a figure out of a scanned slide (`slides/cN.png`): `grid` overlays coordinates, `crop --box` cuts it, `--blank`/`--label` replace example values with symbols, `pair` joins a crop and a plot side by side. First choice for any figure from a new lecture, in any course. |
-| `cheat_figures.py` | Library of ready-made figures, split by subject in `figsets/` (`analog_circuits.py` so far). `--list` shows the catalogue; `python3 tools/cheat_figures.py figs/ lrc sk` writes PNGs; `--plot-only` keeps just the plot panel to pair with a slide crop. |
+| `cheat_figures.py` | Library of ready-made figures, split by subject in `figsets/` (`analog_circuits`, `dc_machines`, `magnetic_circuits`, `ac_power`). `--list` shows the catalogue; `python3 tools/cheat_figures.py figs/ lrc sk` writes PNGs; `--plot-only` keeps just the plot panel to pair with a slide crop. |
 | `figsets/<subject>.py` | One module per subject area. A new course with no fitting figures gets a new module. |
 | `figlib.py` | Drawing helpers and the figure registry: figure size and fonts, schemdraw on matplotlib axes, parts by explicit endpoints, s-plane and Bode axes, block-diagram boxes, collision-free labels. |
 | `cheat_update.py` | Changes the cheat sheet of an existing notes .docx in place (keeps hand edits): Variables lists after equation groups, figures under `Use when:`, new entries, extra lines. Driven by a YAML spec (`example_spec.yaml`). |
 | `cheat_dump.py` | Lists each cheat-sheet entry with paragraph kinds and equation ordinals (EQ0, EQ1, ...) for writing a `cheat_update.py` spec. |
 | `cheat_common.py` | Shared reader for the cheat-sheet section (used by the two scripts above). |
+| `cs4_post.py` | Post-processor for the standalone 4-column exam cheat sheet (`cheatsheet-generator` skill, any course): pandoc docx -> house style (landscape, 4 columns, coloured native equations, `NEWX` = added in green, section font sizes). |
+| `cs4_edit.py` | Edits an existing 4-column cheat sheet in place: `dump` blocks, `append` formulas/variables to a block, `addblock` a new topic block, `figs` (YAML plan, true-size pictures under a Figures label), `cut` blocks (exam-scope copies), `legend` line, `render` (LibreOffice preview + PNGs). |
+| `figsets/dc_machines.py` | DC machine figures: 5 field connections as generator and motor (parts, nodes, current arrows, KCL/KVL line), plugging, Ward-Leonard, OCC/critical R, external characteristics, power flow, efficiency, motor characteristics, commutation, cross-section with GNA/MNA, universal-motor phasor. |
+| `figsets/magnetic_circuits.py`, `figsets/ac_power.py` | Core with gap + reluctance equivalent + toroid geometry, Fleming's rules; power triangle + star/delta. |
 | `contact_sheet.py` | Stacks PNGs into one labelled image for checking figures in a single look. |
 
 Adding to the toolbox: when a run writes something reusable (a new figure, a helper, a checker), add it here with a docstring and a line in this table, and commit it, so the next run reuses it instead of rewriting it.
