@@ -13,7 +13,7 @@ python3 build_notes.py scan  deck.pdf -o slides/          # purple-note redactio
 python3 build_notes.py build notes.md --slides slides/ -o EE321-lecture-12-notes.docx --render render/
 ```
 
-What `build` does: parses the notes markup, auto-splits long pages into `(continued)` pages, converts LaTeX to native Word equations (via pandoc), writes the title page, contents, "Marked as important", the 4-column cheat sheet and an auto-generated Open questions list, then checks for em dashes, recording references, timestamps, unplaced slides, marker wording and cheat-sheet rules. A `!fig path.png` line places an image at column width (cheat-sheet design figures, or a figure in a notes column).
+What `build` does: parses the notes markup, auto-splits long pages into `(continued)` pages, converts LaTeX to native Word equations (via pandoc), writes the title page, contents, "Marked as important", the 4-column cheat sheet and an auto-generated Open questions list, then checks for em dashes, recording references, timestamps, unplaced slides, marker wording and cheat-sheet rules. A `!fig path.png` line places an image at column width (cheat-sheet design figures, or a figure in a notes column). Cheat-sheet entries named `Common traps ...` or `Definitions` need no `Use when:` line.
 
 Needs: Python 3 with pymupdf, pillow, lxml, pyyaml; pandoc; LibreOffice (`soffice`) for .pptx decks and `--render`. The tools also need matplotlib, schemdraw, scipy, numpy.
 
@@ -37,5 +37,6 @@ Reusable scripts, so a run calls them instead of rewriting them. Every script pr
 | `figsets/dc_machines.py` | DC machine figures: 5 field connections as generator and motor (parts, nodes, current arrows, KCL/KVL line), plugging, Ward-Leonard, OCC/critical R, external characteristics, power flow, efficiency, motor characteristics, commutation, cross-section with GNA/MNA, universal-motor phasor. |
 | `figsets/magnetic_circuits.py`, `figsets/ac_power.py` | Core with gap + reluctance equivalent + toroid geometry, Fleming's rules; power triangle + star/delta. |
 | `contact_sheet.py` | Stacks PNGs into one labelled image for checking figures in a single look. |
+| `abbr_tips.py` | Adds abbreviation hover tips (Word ScreenTips) to a finished notes .docx without changing how text looks: `python3 tools/abbr_tips.py IN.docx DICT.json OUT.docx [--dry]`. DICT maps whole-word keys to "Full name: purpose." tips; skips headings, contents, Open questions, red markers, equations and existing links; verifies paragraph text is unchanged. |
 
-Adding to the toolbox: when a run writes something reusable (a new figure, a helper, a checker), add it here with a docstring and a line in this table, and commit it, so the next run reuses it instead of rewriting it.
+Adding to the toolbox: when a run writes something reusable (a new figure, a helper, a checker), add it here with a docstring and a line in this table, and commit it straight to `main` at the end of the run, so the next run downloads it instead of rewriting it.

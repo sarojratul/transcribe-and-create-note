@@ -913,7 +913,7 @@ def cheat_check(topic, lines, warn):
                      (r"\b\d{1,2}:\d{2}\b", "timestamp")]:
         if re.search(pat, txt):
             warn.append("cheat sheet '%s': contains %s (cheat sheet must be topic-based and general)" % (topic, why))
-    if topic.lower().startswith("common traps") is False and topic != "" and "Use when:" not in txt and \
+    if not topic.lower().startswith(("common traps", "definitions")) and topic != "" and "Use when:" not in txt and \
             not topic.lower().startswith("cheat"):
         warn.append("cheat sheet '%s': missing 'Use when:' line" % topic)
 
