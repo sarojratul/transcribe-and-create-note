@@ -925,3 +925,135 @@ def zind_plot():
     return f
 
 register_desc(DESC)
+
+
+# ---- added 2026-10-16 (EE 321 combined cheat sheet): Schmitt trigger, summer/difference amp,
+# log/antilog amplifiers, two-port standard circuits panel
+register_desc({
+    'schmitt': 'Non-inverting Schmitt trigger (R1 in, R2 feedback to +, V_ref at -) + hysteresis loop V_TL, V_TH, V_OH, V_OL',
+    'opsum': 'Inverting summer (R1, R2, Rf) and difference amplifier (R, Rf, R1, R2) side by side',
+    'logamp': 'Log amplifier (R in, diode feedback) and antilog amplifier (diode in, R feedback) side by side',
+})
+
+
+def _noninv_schmitt(d):
+    OPAMP(d)
+    xo = 3.9
+    P = (-0.5, -0.62)
+    TL(d, (-2.8, -0.62), VIN)
+    R_(d, (-2.8, -0.62), P, '$R_1$', 'bottom')
+    DOT(d, P)
+    W_(d, P, (0, -0.62))
+    W_(d, P, (-0.5, -2.0))
+    R_(d, (-0.5, -2.0), (xo, -2.0), '$R_2$', 'bottom')
+    W_(d, (xo, -2.0), (xo, 0))
+    W_(d, (3.42, 0), (xo, 0))
+    DOT(d, (xo, 0))
+    W_(d, (xo, 0), (xo + 0.5, 0))
+    TR(d, (xo + 0.5, 0), VOUT)
+    W_(d, (0, 0.62), (-0.6, 0.62))
+    TL(d, (-0.6, 0.62), '$V_\\mathrm{ref}$')
+
+
+@reg
+def schmitt():
+    f, (a, b) = fig(2, 1.1, [1.25, 1])
+    circuit(a, _noninv_schmitt)
+    lo, hi = a.get_ylim(); a.set_ylim(lo - 1.1, hi)
+    a.text(0.5, lo - 0.75, 'switch when $V_+=V_-$', fontsize=4.8, ha='center', va='center', color='#006400',
+           transform=a.get_yaxis_transform())
+    lo, hi, tl, th = -0.8, 0.8, -0.35, 0.35
+    b.plot([-1, th], [lo, lo], 'k'); b.plot([th, th], [lo, hi], 'k')
+    b.plot([tl, 1], [hi, hi], 'k'); b.plot([tl, tl], [hi, lo], 'k')
+    b.annotate('', xy=(0.05, lo), xytext=(-0.6, lo), arrowprops=dict(arrowstyle='->', lw=0.7, color='#1F3864'))
+    b.annotate('', xy=(-0.05, hi), xytext=(0.65, hi), arrowprops=dict(arrowstyle='->', lw=0.7, color='#1F3864'))
+    b.axhline(0, color='k', lw=0.5); b.axvline(0, color='k', lw=0.5)
+    b.set_xticks([]); b.set_yticks([]); [s.set_visible(False) for s in b.spines.values()]
+    b.text(th, -0.08, '$V_{TH}$', ha='left', va='top', fontsize=4.8)
+    b.text(tl - 0.04, 0.08, '$V_{TL}$', ha='right', va='bottom', fontsize=4.8)
+    b.text(-1, hi + 0.06, '$V_{OH}$', fontsize=4.8)
+    b.text(0.55, lo - 0.08, '$V_{OL}$', va='top', fontsize=4.8)
+    b.text(1.0, -0.1, VIN, ha='right', va='top', fontsize=4.8)
+    b.text(0.04, 1.05, VOUT, fontsize=4.8)
+    b.set_xlim(-1.05, 1.05); b.set_ylim(-1.1, 1.2)
+    return f
+
+
+def _summer(d):
+    OPAMP(d)
+    n = (-0.5, 0.62)
+    xo = 3.9
+    W_(d, (0, 0.62), n); DOT(d, n)
+    R_(d, (-2.6, 0.62), n, '$R_1$')
+    TL(d, (-2.6, 0.62), '$V_1$')
+    R_(d, (-2.6, -0.9), (-0.5, -0.9), '$R_2$', 'bottom')
+    TL(d, (-2.6, -0.9), '$V_2$')
+    W_(d, (-0.5, -0.9), n)
+    W_(d, n, (-0.5, 1.9))
+    R_(d, (-0.5, 1.9), (xo, 1.9), '$R_f$')
+    W_(d, (xo, 1.9), (xo, 0))
+    W_(d, (3.42, 0), (xo, 0)); DOT(d, (xo, 0))
+    W_(d, (xo, 0), (xo + 0.5, 0)); TR(d, (xo + 0.5, 0), '$V_o$')
+    W_(d, (0, -0.62), (0.4, -0.62)); W_(d, (0.4, -0.62), (0.4, -1.5)); GND(d, (0.4, -1.5))
+
+
+def _diffamp(d):
+    OPAMP(d)
+    n = (-0.5, 0.62); p = (-0.5, -0.62)
+    xo = 3.9
+    W_(d, (0, 0.62), n); DOT(d, n)
+    R_(d, (-2.6, 0.62), n, '$R$')
+    TL(d, (-2.6, 0.62), '$V_1$')
+    W_(d, (0, -0.62), p); DOT(d, p)
+    R_(d, (-2.6, -0.62), p, '$R_1$', 'bottom')
+    TL(d, (-2.6, -0.62), '$V_2$')
+    R_(d, p, (-0.5, -2.4), '$R_2$', 'bottom')
+    GND(d, (-0.5, -2.4))
+    W_(d, n, (-0.5, 1.9))
+    R_(d, (-0.5, 1.9), (xo, 1.9), '$R_f$')
+    W_(d, (xo, 1.9), (xo, 0))
+    W_(d, (3.42, 0), (xo, 0)); DOT(d, (xo, 0))
+    W_(d, (xo, 0), (xo + 0.5, 0)); TR(d, (xo + 0.5, 0), '$V_o$')
+
+
+@reg
+def opsum():
+    f, (a, b) = fig(2, 1.0, [1, 1])
+    circuit(a, _summer)
+    circuit(b, _diffamp)
+    for ax, t in ((a, 'inverting summer'), (b, 'difference amp')):
+        lo, hi = ax.get_ylim(); ax.set_ylim(lo - 0.7, hi)
+        ax.text(0.5, lo - 0.4, t, fontsize=4.8, ha='center', va='center', transform=ax.get_yaxis_transform())
+    return f
+
+
+def _logamp(d, anti=False):
+    OPAMP(d)
+    n = (-0.5, 0.62)
+    xo = 3.9
+    W_(d, (0, 0.62), n); DOT(d, n)
+    TL(d, (-2.6, 0.62), '$V_i$')
+    if anti:
+        d += elm.Diode().endpoints((-2.6, 0.62), n).label('$D$')
+    else:
+        R_(d, (-2.6, 0.62), n, '$R$')
+    W_(d, n, (-0.5, 1.9))
+    if anti:
+        R_(d, (-0.5, 1.9), (xo, 1.9), '$R$')
+    else:
+        d += elm.Diode().endpoints((-0.5, 1.9), (xo, 1.9)).label('$D$')
+    W_(d, (xo, 1.9), (xo, 0))
+    W_(d, (3.42, 0), (xo, 0)); DOT(d, (xo, 0))
+    W_(d, (xo, 0), (xo + 0.5, 0)); TR(d, (xo + 0.5, 0), '$V_o$')
+    W_(d, (0, -0.62), (0.0, -1.5)); GND(d, (0.0, -1.5))
+
+
+@reg
+def logamp():
+    f, (a, b) = fig(2, 0.95, [1, 1])
+    circuit(a, lambda d: _logamp(d, False))
+    circuit(b, lambda d: _logamp(d, True))
+    for ax, t in ((a, 'log amp'), (b, 'antilog amp')):
+        lo, hi = ax.get_ylim(); ax.set_ylim(lo - 0.7, hi)
+        ax.text(0.5, lo - 0.4, t, fontsize=4.8, ha='center', va='center', transform=ax.get_yaxis_transform())
+    return f
