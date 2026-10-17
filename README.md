@@ -25,9 +25,9 @@ Reusable scripts, so a run calls them instead of rewriting them. Every script pr
 
 | Script | What it does |
 |---|---|
-| `slide_crop.py` | Cut a figure out of a scanned slide (`slides/cN.png`): `grid` overlays coordinates, `crop --box` cuts it, `--blank`/`--label` replace example values with symbols, `pair` joins a crop and a plot side by side. First choice for any figure from a new lecture, in any course. |
+| `slide_crop.py` | Cut a figure out of a scanned slide (`slides/cN.png`): `grid` overlays coordinates, `crop --box` cuts it, `--blank`/`--label` replace example values with symbols, `--strip-ink` whitens coloured handwritten ink and highlighter while keeping black line art, `pair` joins a crop and a plot side by side. First choice for any figure from a new lecture, in any course. |
 | `cheat_figures.py` | Library of ready-made figures, split by subject in `figsets/` (`analog_circuits`, `dc_machines`, `magnetic_circuits`, `ac_power`). `--list` shows the catalogue; `python3 tools/cheat_figures.py figs/ lrc sk` writes PNGs; `--plot-only` keeps just the plot panel to pair with a slide crop. |
-| `figsets/<subject>.py` | One module per subject area. A new course with no fitting figures gets a new module. |
+| `figsets/<subject>.py` | One module per subject area. A new course with no fitting figures gets a new module. `analog_circuits` now also has filter design-from-spec masks (`designspec`, `designspec_cheb`, `designspec_ex`), three-output biquad plot (`biquad3_plot`) and a simulated-inductor impedance plot (`zind_plot`). |
 | `figlib.py` | Drawing helpers and the figure registry: figure size and fonts, schemdraw on matplotlib axes, parts by explicit endpoints, s-plane and Bode axes, block-diagram boxes, collision-free labels. |
 | `cheat_update.py` | Changes the cheat sheet of an existing notes .docx in place (keeps hand edits): Variables lists after equation groups, figures under `Use when:`, new entries, extra lines. Driven by a YAML spec (`example_spec.yaml`). |
 | `cheat_dump.py` | Lists each cheat-sheet entry with paragraph kinds and equation ordinals (EQ0, EQ1, ...) for writing a `cheat_update.py` spec. |

@@ -824,4 +824,104 @@ def sk_circ(d, gainK=True):
     else:
         W_(d, (-0.5, 1.8), (xo, 1.8))
 
+
+# ---- filter design from specifications, biquad outputs, simulated inductor (EE 321 Lec 16-17)
+DESC.update({
+    'biquad3_plot': 'Three-op-amp biquad: |H| at V_A (high-pass), V_B (band-pass), V_out (low-pass), same poles at omega0',
+    'designspec': 'Butterworth design from specs: mask (0 dB max, A_p at w_p, A_s at w_s), w0 below w_p, |H| of order n',
+    'designspec_cheb': 'Chebyshev design from specs: ripple alpha = A_p, w0 = w_p, stopband A_s at w_s',
+    'designspec_ex': 'Worked spec example (notes pages only): -6 dB at 30 kHz, -30 dB at 60 kHz, n = 5, w0 = 26.9 kHz',
+    'zind_plot': 'Simulated inductor (Antoniou): |Z_in| rising +20 dB/dec, Z_in = j omega L_eq to ground',
+})
+
+@reg
+def biquad3_plot():
+    f, (b,) = fig(1, 1.05)
+    w = np.logspace(-1.3, 1.3, 400)
+    Q = 1.0
+    den = [1, 1 / Q, 1]
+    b.plot(w, 20 * np.log10(resp([1], den, w)), 'k', lw=0.9)
+    b.plot(w, 20 * np.log10(resp([1, 0, 0], den, w)), 'k--', lw=0.8)
+    b.plot(w, 20 * np.log10(resp([1, 0], den, w)), 'k:', lw=0.9)
+    bode_axes(b, r'$\omega$ (log)', r'$|H|$ dB')
+    b.set_ylim(-45, 8)
+    b.text(0.06, 1.5, r'$V_\mathrm{out}$: low-pass', fontsize=4.6)
+    b.text(4.5, 1.5, r'$V_A$: high-pass', fontsize=4.6, ha='center')
+    b.text(1, -28, r'$V_B$: band-pass', fontsize=4.6, ha='center')
+    vlabel(b, 1, r'$\omega_0$')
+    return f
+
+def _bw_curve(w, n, w0):
+    return -10 * np.log10(1 + (w / w0) ** (2 * n))
+
+def _designspec(ex=False, cheb=False):
+    f, (b,) = fig(1, 1.25)
+    wp, ws = 1.0, 2.0
+    Ap, As = 6.0, 30.0
+    w = np.logspace(-1, np.log10(5), 500)
+    eps = np.sqrt(10 ** (Ap / 10) - 1)
+    if cheb:
+        bb, aa = signal.cheby1(3, Ap, wp, analog=True)
+        H = 20 * np.log10(resp(bb, aa, w))
+        w0 = wp
+    else:
+        n = 5
+        w0 = wp / eps ** (1 / n)
+        H = _bw_curve(w, n, w0)
+    b.fill_between([0.1, wp], [-Ap, -Ap], [-40, -40], color='0.88', lw=0)
+    b.fill_between([0.1, 5], [0.0, 0.0], [5, 5], color='0.88', lw=0)
+    b.fill_between([ws, 5], [-As, -As], [5, 5], color='0.88', lw=0)
+    b.plot(w, H, 'k', lw=0.9)
+    bode_axes(b, r'$\omega$ (log)', r'$|H|$ dB')
+    b.set_ylim(-40, 5); b.set_xlim(0.1, 5)
+    b.axhline(-Ap, color='0.4', lw=0.4, ls=':'); b.axhline(-As, color='0.4', lw=0.4, ls=':')
+    b.axvline(wp, color='0.4', lw=0.4, ls=':'); b.axvline(ws, color='0.4', lw=0.4, ls=':')
+    if ex:
+        lp, ls_, l0 = '30 kHz', '60 kHz', r'$\omega_0$ 26.9 kHz'
+        tAp, tAs, t0 = '$-6$ dB (min in passband)', '$-30$ dB (max in stopband)', '0 dB (max in passband)'
+    else:
+        lp, ls_, l0 = r'$\omega_p$', r'$\omega_s$', r'$\omega_0$'
+        tAp, tAs, t0 = r'$-A_p$ (min in passband)', r'$-A_s$ (max in stopband)', '0 dB (max)'
+    b.text(0.11, 1.2, t0, fontsize=4.4)
+    b.text(0.11, -Ap - 3.2, tAp, fontsize=4.4)
+    b.text(ws * 1.03, -As + 1.2, tAs, fontsize=4.2)
+    b.text(0.3, -22, 'passband', fontsize=4.6, ha='center', color='0.3')
+    b.text(1.42, -38.5, 'transition', fontsize=4.0, ha='center', color='0.3', rotation=90, va='bottom')
+    b.text(3.2, -12, 'stopband', fontsize=4.6, ha='center', color='0.3')
+    vlabel(b, wp, lp, fs=4.6)
+    vlabel(b, ws, ls_, fs=4.6)
+    if cheb:
+        b.text(0.11, -15, r'ripple $\alpha = A_p$, $\omega_0 = \omega_p$', fontsize=4.4)
+    else:
+        b.plot([w0], [_bw_curve(np.array([w0]), 5, w0)[0]], 'ko', ms=1.8)
+        b.annotate(l0, xy=(w0, -3.0), xytext=(0.32, -27), fontsize=4.4,
+                   arrowprops=dict(arrowstyle='-', lw=0.3, color='0.3'))
+        b.text(2.1, -21, 'order $n$' if not ex else '$n = 5$', fontsize=4.4)
+    return f
+
+@reg
+def designspec():
+    return _designspec()
+
+@reg
+def designspec_cheb():
+    return _designspec(cheb=True)
+
+@reg
+def designspec_ex():
+    return _designspec(ex=True)
+
+@reg
+def zind_plot():
+    f, (b,) = fig(1, 1.0)
+    w = np.logspace(-1, 1, 50)
+    b.plot(w, 20 * np.log10(w), 'k')
+    b.set_xscale('log'); b.set_xticks([]); b.set_yticks([])
+    b.set_xlabel(r'$\omega$ (log)', labelpad=1); b.set_ylabel(r'$|Z_\mathrm{in}|$ dB', labelpad=1)
+    for s in ['top', 'right']: b.spines[s].set_visible(False)
+    b.text(0.12, 12, r'$Z_\mathrm{in} = j\omega L_\mathrm{eq}$', fontsize=5)
+    b.text(1.6, -8, '+20 dB/dec', fontsize=5)
+    b.text(0.12, 4, 'inductor to ground', fontsize=4.6, color='0.3')
+    return f
+
 register_desc(DESC)

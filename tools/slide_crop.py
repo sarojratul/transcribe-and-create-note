@@ -11,7 +11,8 @@ image from `build_notes.py scan` (slides/cN.png), for the cheat sheet or a notes
      --box/--blank/--label coordinates are slide fractions (x0 y0 x1 y1, origin top-left).
      White margins are trimmed. --blank is repeatable (white fill); --label writes text at the
      top-left corner of a blanked spot, sized to its height (use plain text or Unicode symbols;
-     "_x" makes a subscript-looking smaller suffix).
+     "_x" makes a subscript-looking smaller suffix). --strip-ink whitens coloured handwritten
+     ink and highlighter (any saturated pixel) and keeps black/grey line art.
   3. Put two pieces side by side (e.g. a circuit from one slide and a plot from another):
        python3 slide_crop.py pair figs/a.png figs/b.png -o figs/entry.png [--ratio 1.2]
 
@@ -62,6 +63,32 @@ def cmd_grid(a):
     print("wrote", a.out)
 
 
+def strip_ink(im, sat=60, grow=3):
+    """Whiten coloured pixels (handwritten ink, highlights) and keep black/grey line art.
+    A pixel counts as ink when max(R,G,B) - min(R,G,B) > sat. The ink mask is grown by `grow`
+    px to catch anti-aliased edges; inside the grown mask only pixels lighter than near-black
+    are whitened, so black lines the ink touches survive."""
+    from PIL import ImageFilter
+    px = im.load()
+    mask = Image.new("L", im.size, 0)
+    mp = mask.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b = px[x, y]
+            if max(r, g, b) - min(r, g, b) > sat:
+                mp[x, y] = 255
+    if grow:
+        mask = mask.filter(ImageFilter.MaxFilter(2 * grow + 1))
+        mp = mask.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            if mp[x, y]:
+                r, g, b = px[x, y]
+                if max(r, g, b) - min(r, g, b) > sat or (r + g + b) / 3 > 70:
+                    px[x, y] = (255, 255, 255)
+    return im
+
+
 def cmd_crop(a):
     im = Image.open(a.slide).convert("RGB")
     d = ImageDraw.Draw(im)
@@ -79,6 +106,8 @@ def cmd_crop(a):
             w = d.textlength(main, font=f)
             d.text((px[0] + w, px[1] + h * 0.35), sub, fill="black", font=font(h * 0.55))
     out = im.crop(frac_box(im, a.box))
+    if a.strip_ink:
+        out = strip_ink(out, a.strip_ink)
     if not a.no_trim:
         out = trim(out)
     out.save(a.out)
@@ -111,6 +140,8 @@ def main():
     c.add_argument("--blank", type=float, nargs=4, action="append", metavar=("X0", "Y0", "X1", "Y1"))
     c.add_argument("--label", nargs=3, action="append", metavar=("X", "Y", "TEXT"))
     c.add_argument("--no-trim", action="store_true")
+    c.add_argument("--strip-ink", type=int, nargs="?", const=60, default=0, metavar="SAT",
+                   help="whiten coloured ink/highlight pixels (saturation > SAT, default 60); keeps black line art")
     p = sub.add_parser("pair"); p.add_argument("left"); p.add_argument("right"); p.add_argument("-o", "--out", required=True)
     p.add_argument("--ratio", type=float, help="width of left piece relative to right (default: equal heights)")
     a = ap.parse_args()
