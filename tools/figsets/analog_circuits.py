@@ -6,7 +6,7 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from figlib import *
 
-DESC = {'rc_lp': 'First-order RC low-pass: circuit + Bode magnitude/phase (omega0, -3 dB, -20 dB/dec, -45 deg)', 'rc_hp': 'First-order RC high-pass: circuit + Bode', 'rlc2': 'Series R, shunt L||C (band-pass RLC): circuit + pole locus as R increases', 'dcerr': 'Inverting amp with compensating R at + input (bias current) + transfer curve shifted by V_OS', 'seriesshunt': 'Non-inverting amp (series-shunt feedback, B = R1/(R1+R2)) + A/B feedback block diagram', 'sp_fb': 'Non-inverting amp + single pole moving from -w0 to -w0(1+Adc B)', 'gbp': '|A| and |G| log-log: Adc, Gdc, w0, w0prime, wu = GBP', 'twopole': 'Two-pole amp with feedback: pole locus (meet, split vertically) + |G| peaking for Q', 'polemove': 'Three equal poles root locus vs B (crossing jw at B_crit)', 'stab': 'Feedback block diagram G = A/(1+AB) + three-pole root locus', 'equal': 'n equal poles: |A| and angle A, w_c where angle = -pi, Adc cos^n(pi/n)', 'dompole': 'Dominant-pole compensation: |A| with wD, wp (angle -pi), 1/Bmax line', 'margins': 'Bode |A| and angle A with 1/B line, PM at |AB| = 1, GM at w180', 'spec': 'Filter |H| regions: passband ripple, transition, stopband, 1/sqrt2', 'butter': 'Butterworth: poles on circle (kept/dropped) + |H| for increasing n', 'cheb': 'Chebyshev: poles on ellipse + |H| with passband ripple alpha', 'invcheb': 'Inverse Chebyshev: poles + jw-axis zeros + |H| with stopband ripple', 'compare': 'Butterworth/Chebyshev/inverse Chebyshev/elliptic/Bessel |H| + group delay, same n', 'cascade': 'Block cascade H1 -> H2 -> ... -> Hk (poles grouped into blocks)', 'realization': 'Cascade of n/2 second-order sections', 'zmult': 'Op-amp impedance (capacitance) multiplier circuit + R_eq/C_eq equivalent', 'rc1': 'Passive RC one-pole block: circuit + single pole at -w0', 'lrc': 'Passive LRC block (series L, shunt R||C): circuit + conjugate pair at |p|, theta', 'sk': 'Sallen-Key low-pass with gain K (R0, (K-1)R0): circuit + pole locus vs K (K=1 to K=3)', 'act1': 'First-order active RC (inverting, R2||C feedback): circuit + Bode', 'integ': 'Inverting integrator circuit + biquad block diagram (summer + two integrators)', 'lpspec': 'Low-pass spec mask: Gp, Ap, As, fc, fs', 'types3': 'Butterworth vs Chebyshev I vs elliptic in dB, same order', 'sos': 'Second-order sections: type 1 |H| for Q values + type 2 notch at wz', 'topo': 'Sallen-Key (unity gain) and MFB low-pass circuits, stacked'}
+DESC = {'rc_lp': 'First-order RC low-pass: circuit + Bode magnitude/phase (omega0, -3 dB, -20 dB/dec, -45 deg)', 'rc_hp': 'First-order RC high-pass: circuit + Bode', 'rlc2': 'Series R, shunt L||C (band-pass RLC): circuit + pole locus as R increases', 'dcerr': 'Inverting amp with compensating R at + input (bias current) + transfer curve shifted by V_OS', 'seriesshunt': 'Non-inverting amp (series-shunt feedback, B = R1/(R1+R2)) + A/B feedback block diagram', 'sp_fb': 'Non-inverting amp + single pole moving from -w0 to -w0(1+Adc B)', 'gbp': '|A| and |G| log-log: Adc, Gdc, w0, w0prime, wu = GBP', 'twopole': 'Two-pole amp with feedback: pole locus (meet, split vertically) + |G| peaking for Q', 'polemove': 'Three equal poles root locus vs B (crossing jw at B_crit)', 'stab': 'Feedback block diagram G = A/(1+AB) + three-pole root locus', 'equal': 'n equal poles: |A| and angle A, w_c where angle = -pi, Adc cos^n(pi/n)', 'dompole': 'Dominant-pole compensation: |A| with wD, wp (angle -pi), 1/Bmax line', 'margins': 'Bode |A| and angle A with 1/B line, PM at |AB| = 1, GM at w180', 'spec': 'Filter |H| regions: passband ripple, transition, stopband, 1/sqrt2', 'butter': 'Butterworth: poles on circle (kept/dropped) + |H| for increasing n', 'cheb': 'Chebyshev: poles on ellipse + |H| with passband ripple alpha', 'invcheb': 'Inverse Chebyshev: poles + jw-axis zeros + |H| with stopband ripple', 'compare': 'Butterworth/Chebyshev/inverse Chebyshev/elliptic/Bessel |H| + group delay, same n', 'cascade': 'Block cascade H1 -> H2 -> ... -> Hk (poles grouped into blocks)', 'realization': 'Cascade of n/2 second-order sections', 'zmult': 'Op-amp impedance (capacitance) multiplier circuit + R_eq/C_eq equivalent', 'rc1': 'Passive RC one-pole block: circuit + single pole at -w0', 'lrc': 'Passive LRC block (series L, shunt R||C): circuit + conjugate pair at |p|, theta', 'sk': 'Sallen-Key low-pass with gain K (R0, (K-1)R0): circuit + pole locus vs K (K=1 to K=3)', 'act1': 'First-order active RC (inverting, R2||C feedback): circuit + Bode', 'integ': 'Inverting integrator circuit + biquad block diagram (summer + two integrators)', 'lpspec': 'Low-pass spec mask: Gp, Ap, As, fc, fs', 'types3': 'Butterworth vs Chebyshev I vs elliptic in dB, same order', 'sos': 'Second-order sections: type 1 |H| for Q values + type 2 notch at wz', 'topo': 'Sallen-Key (unity gain) and MFB low-pass circuits, stacked', 'ellbessel': 'Elliptic |H| (ripple in both bands, stopband notches) + Bessel phase linear in omega (same delay)'}
 
 
 import schemdraw.dsp as dsp
@@ -489,6 +489,35 @@ def compare():
     magplot(b, 'group delay (norm.)')
     b.set_ylim(0, 3.2)
     b.set_title('delay: Bessel flattest', fontsize=5, pad=1)
+    return f
+
+@reg
+def ellbessel():
+    f, (a, b) = fig(2, 1.05, [1.25, 1])
+    w = np.linspace(0.001, 3, 800)
+    bb, aa = signal.ellip(4, 1.5, 18, 1, analog=True)
+    H = resp(bb, aa, w)
+    a.plot(w, H, 'k', lw=0.8)
+    magplot(a)
+    a.set_ylim(0, 1.15)
+    a.set_title('elliptic', fontsize=5, pad=1)
+    a.text(0.2, 1.04, 'ripple', fontsize=4.6)
+    a.text(1.25, 0.42, 'stopband ripple,', fontsize=4.6)
+    a.text(1.25, 0.32, 'notches (zeros)', fontsize=4.6)
+    a.axvline(1, color='0.6', lw=0.5, ls=':')
+    bb, aa = signal.bessel(4, 1, analog=True, norm='delay')
+    w2 = np.linspace(0.001, 1.6, 400)
+    ph = np.unwrap(np.angle(signal.freqs(bb, aa, worN=w2)[1]))
+    b.plot(w2, -ph, color='0.45', lw=1.0)
+    b.plot(w2, w2, 'k', ls=':', lw=0.6)
+    b.set_xticks([]); b.set_yticks([])
+    b.set_xlabel('$\\omega$', labelpad=1)
+    b.set_ylabel('$-\\angle H$', labelpad=1)
+    for s in ['top', 'right']:
+        b.spines[s].set_visible(False)
+    b.set_title('Bessel: linear phase', fontsize=5, pad=1)
+    b.text(0.08, 1.15, '$\\Delta\\phi=\\omega\\Delta t$', fontsize=5, color='#006400')
+    b.text(0.55, 0.25, 'same $\\Delta t$ at all $\\omega$', fontsize=4.6)
     return f
 
 def cascade_block(ax, labs=('$H_1$', '$H_2$', '$H_k$')):
