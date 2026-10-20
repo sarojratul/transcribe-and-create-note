@@ -20,6 +20,12 @@ block the labels "Formulas", "Variables and constants", "Unit conversions", "Fig
       Remove whole blocks (e.g. a midterm copy without later chapters).
   python3 cs4_edit.py legend SHEET.docx "Figures: navy arrows = current direction ..." -o OUT.docx
       Add a line to the Colour Legend just before its "Sizes:" line.
+  python3 cs4_edit.py notes  SHEET.docx PLAN.yaml -o OUT.docx
+      PLAN: {"Topic name": {"Steps": ["...", ...], "Traps": ["...", ...]}, ...}. Adds a "Steps"
+      label + numbered list (general solving procedure from examples/assignments) and a "Traps"
+      label + bullets (cautions from lectures) after Variables, before Figures, in the variables'
+      5.5 pt text style. Re-running appends to existing Steps/Traps lists. Plain text with Unicode
+      symbols (no LaTeX); keep each item to one short line.
   python3 cs4_edit.py render SHEET.docx [--dir render] [--dpi 80]
       LibreOffice -> PDF (+ PNG per page), prints the page count. Installs libreoffice-math if
       missing. LibreOffice ignores equation size/colour, so it shows more pages than Word: compare
@@ -33,7 +39,7 @@ from lxml import etree
 
 W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 w = lambda t: '{%s}%s' % (W, t)
-LABELS = ('Formulas', 'Variables and constants', 'Unit conversions', 'Figures')
+LABELS = ('Formulas', 'Variables and constants', 'Unit conversions', 'Steps', 'Traps', 'Figures')
 
 
 def txt(p):
@@ -82,16 +88,16 @@ def find_block(body, topic):
 
 
 def sections(ps):
-    s = {'f': [], 'v': [], 'u': [], 'g': [], 'labels': {}}
+    s = {'f': [], 'v': [], 'u': [], 's': [], 't': [], 'g': [], 'labels': {}}
     cur = None
-    key = {'Formulas': 'f', 'Variables and constants': 'v', 'Unit conversions': 'u', 'Figures': 'g'}
+    key = {'Formulas': 'f', 'Variables and constants': 'v', 'Unit conversions': 'u', 'Steps': 's', 'Traps': 't', 'Figures': 'g'}
     for p in ps[1:]:
         t = txt(p)
         if t in key and not has_pic(p):
             cur = key[t]; s['labels'][cur] = p; continue
         if cur == 'g' and has_pic(p):
             s['g'].append(p)
-        elif cur in ('f', 'v', 'u') and numid(p):
+        elif cur in ('f', 'v', 'u', 's', 't') and numid(p):
             s[cur].append(p)
     return s
 
@@ -105,7 +111,7 @@ def cmd_dump(a):
     d = docx.Document(a.sheet)
     for t, ps in blocks(d.element.body):
         s = sections(ps)
-        print('%-50s formulas %2d  variables %2d  conversions %d  figures %d' % (t, len(s['f']), len(s['v']), len(s['u']), len(s['g'])))
+        print('%-50s formulas %2d  variables %2d  conversions %d  steps %d  traps %d  figures %d' % (t, len(s['f']), len(s['v']), len(s['u']), len(s['s']), len(s['t']), len(s['g'])))
 
 
 def cmd_append(a):
@@ -221,6 +227,60 @@ def cmd_legend(a):
     d.save(a.o); print('legend line added -> %s' % a.o)
 
 
+def _text_rpr(p):
+    """rPr of the first plain-text run (not math) in paragraph p, or None."""
+    for r in p.findall(w('r')):
+        if r.find(w('t')) is not None:
+            rp = r.find(w('rPr'))
+            return copy.deepcopy(rp) if rp is not None else None
+    return None
+
+
+def cmd_notes(a):
+    """Add Steps (numbered) and Traps (bullets) sections to topic blocks."""
+    import yaml
+    plan = yaml.safe_load(open(a.plan))
+    d = docx.Document(a.sheet); body = d.element.body
+    tf = tv = None; vitem = None; vlabel = None
+    for _, ps in blocks(body):
+        s = sections(ps)
+        if s['f'] and not tf: tf = numid(s['f'][0])
+        if s['v'] and not tv: tv = numid(s['v'][0]); vitem = s['v'][0]; vlabel = s['labels']['v']
+    if vitem is None: sys.exit('no Variables list on the sheet to copy the style from')
+    rpr = _text_rpr(vitem)
+    numbering = d.part.numbering_part
+    nxt = max(int(n.get(w('numId'))) for n in numbering._element.findall(w('num'))) + 1
+    added = 0
+    for topic, secs in plan.items():
+        ps = find_block(body, topic); s = sections(ps)
+        # insertion anchor: after the last non-figure paragraph before a Figures label
+        anchor = s['labels']['g'].getprevious() if 'g' in s['labels'] else ps[-1]
+        for name, key, src in (('Steps', 's', tf), ('Traps', 't', tv)):
+            items = (secs or {}).get(name) or []
+            if not items: continue
+            if s[key]:
+                last = s[key][-1]; nid = numid(last)
+            else:
+                lab = copy.deepcopy(vlabel)
+                runs = lab.findall(w('r')); runs[0].find(w('t')).text = name
+                for r in runs[1:]: lab.remove(r)
+                anchor.addnext(lab); last = lab
+                nid = str(nxt); clone_num(numbering, src, nid); nxt += 1
+            for it in items:
+                q = copy.deepcopy(vitem)
+                for ch in list(q):
+                    if ch.tag != w('pPr'): q.remove(ch)
+                setnum(q, nid)
+                r = etree.SubElement(q, w('r'))
+                if rpr is not None: r.append(copy.deepcopy(rpr))
+                t = etree.SubElement(r, w('t')); t.text = str(it)
+                t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
+                last.addnext(q); last = q; added += 1
+            anchor = last
+            s = sections(find_block(body, topic))
+    d.save(a.o); print('added %d step/trap lines -> %s' % (added, a.o))
+
+
 def cmd_render(a):
     if subprocess.run('dpkg -s libreoffice-math >/dev/null 2>&1', shell=True).returncode:
         subprocess.run('apt-get install -y -q libreoffice-math >/dev/null 2>&1 || (apt-get update -q >/dev/null 2>&1 && apt-get install -y -q libreoffice-math >/dev/null 2>&1)', shell=True)
@@ -242,6 +302,7 @@ def main():
     p = sp.add_parser('figs'); p.add_argument('sheet'); p.add_argument('plan'); p.add_argument('--colw', type=float, default=2.45); p.add_argument('-o', required=True); p.set_defaults(f=cmd_figs)
     p = sp.add_parser('cut'); p.add_argument('sheet'); p.add_argument('--topic', action='append', required=True); p.add_argument('-o', required=True); p.set_defaults(f=cmd_cut)
     p = sp.add_parser('legend'); p.add_argument('sheet'); p.add_argument('text'); p.add_argument('-o', required=True); p.set_defaults(f=cmd_legend)
+    p = sp.add_parser('notes'); p.add_argument('sheet'); p.add_argument('plan'); p.add_argument('-o', required=True); p.set_defaults(f=cmd_notes)
     p = sp.add_parser('render'); p.add_argument('sheet'); p.add_argument('--dir', default='render'); p.add_argument('--dpi', type=int, default=80); p.set_defaults(f=cmd_render)
     a = ap.parse_args(); a.f(a)
 
