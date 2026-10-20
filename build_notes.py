@@ -904,6 +904,12 @@ def back_xml(doc, back, markers, num_ids, warn):
         for where, raw in markers:
             x += p(runs_xml(doc, parse_inline("%s: %s" % (where.upper(), raw)), NOTE_SZ, True, None, RED), (0, 80))
     final = sect(1, first=not cheat)
+    if cheat and not markers:
+        # No Open questions: the cheat sheet is the last section, so end the body with its
+        # 4-column sectPr instead of a trailing empty 1-column section (which adds a blank page).
+        tail = sect_para(sect(4))
+        if x.endswith(tail):
+            x, final = x[:-len(tail)], sect(4)
     return x, final
 
 
@@ -1117,6 +1123,7 @@ def write_package(out, body_xml, final_sect, doc, meta):
                                     '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>'
                                     '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'
                                     '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>')
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         for n in ["[Content_Types].xml", "_rels/.rels"] + [k for k in files if k not in ("[Content_Types].xml", "_rels/.rels")]:
             z.writestr(n, files[n])
