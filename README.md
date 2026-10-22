@@ -1,6 +1,6 @@
 # transcribe-and-create-note (builder and tools)
 
-Builds AES-style lecture notes as a Word file, for any course: slide on the left (two-thirds width, centred), notes on the right, one page per slide appearance, in lecture order. Used by the `transcribe-and-create-note` Claude skill.
+Builds AES-style lecture notes as a Word file, for any course: slide on the left (two-thirds width, centred), notes on the right, one page per slide appearance, in lecture order. Used by the `transcribe-and-create-note` Claude skill; `tools/merge_notes.py` is used by the `document-merger` skill to combine several notes files into one.
 
 Get everything in one step (the skill does this):
 
@@ -38,6 +38,7 @@ Reusable scripts, so a run calls them instead of rewriting them. Every script pr
 | `figsets/magnetic_circuits.py`, `figsets/ac_power.py` | Core with gap + reluctance equivalent + toroid geometry, Fleming's rules; power triangle + star/delta. |
 | `figsets/electromagnetics.py` | Electromagnetics (Hayt and Buck, EE 301): RCS-CCS and RCS-SCS point figures with unit vectors at P, and RCS/CCS/SCS differential volume elements with edge lengths, face normals, dS on each face and dv; drawn with a true orthographic projection helper (`View`) so labels stay put. |
 | `figsets/microprocessors.py` | Microprocessor and ARM assembly (CME 331): `number_wheel4` (4-bit number wheel with bit patterns, unsigned and signed values, C wrap at 1111/0000 and V wrap at 0111/1000, add = clockwise) and `stack_push3` (stack before and after `PUSH {Ra,Rb,Rc}`: SP drops 4k, lowest register at the lowest address, POP refills in the same order). |
+| `merge_notes.py` | Merges several notes .docx files (one per lecture, from `build_notes.py` or older notes in the same style) into one Word file for the `document-merger` skill: `plan FILES_OR_DIR -o plan.yaml [--lectures 4-18]` finds and orders the files (lecture number, date, topic from name and title lines; duplicates skipped), `build plan.yaml -o OUT.docx` adds a cover and one master contents, a Heading 1 divider per lecture (its headings demoted one level, its own contents removed), keeps each lecture's page setup, one footer with continuous page numbers, schema fixes, images downscaled to `max_dpi`. Needs `docxcompose`. |
 | `contact_sheet.py` | Stacks PNGs into one labelled image for checking figures in a single look. |
 | `abbr_tips.py` | Adds abbreviation hover tips (Word ScreenTips) to a finished notes .docx without changing how text looks: `python3 tools/abbr_tips.py IN.docx DICT.json OUT.docx [--dry]`. DICT maps whole-word keys to "Full name: purpose." tips; skips headings, contents, Open questions, red markers, equations and existing links; verifies paragraph text is unchanged. |
 
